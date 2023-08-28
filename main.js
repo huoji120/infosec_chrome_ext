@@ -169,7 +169,7 @@
             method: "POST",
             url: apiKey ? "https://api.openai.com/v1/chat/completions" : "https://ai.fakeopen.com/v1/chat/completions",
             headers: {
-                Authorization: apiKey ? "Bearer " + apiKey : "huoji",
+                Authorization: apiKey ? "Bearer " + apiKey : "Bearer pk-this-is-a-real-free-pool-token-for-everyone",
                 "Content-Type": "application/json",
                 model: "gpt-3.5-turbo",
             },
