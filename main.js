@@ -2,7 +2,7 @@
 // @license      MIT
 // @name         安服小助手
 // @namespace    http://key08.com/
-// @version      0.3
+// @version      0.4
 // @description  安服必备
 // @author       huoji
 // @match        *://*/*
@@ -27,7 +27,10 @@
             '<div><button id="vt-search-button">发送到VirusTotal</button></div>' +
             '<div><button id="wb-search-button">发送到微步</button></div>' +
             '<div><button id="copy-button">复制到剪切板</button></div>' +
-            '<div><button id="change-ksn-key-button">修改KSN密钥</button></div>';
+            '<div><button id="change-ksn-key-button">修改KSN密钥</button></div>' +
+            '<div><button id="enable-chatgpt">激活GPT模式</button></div>' +
+            '<div><button id="use-chatgpt">使用GPT进行介绍</button></div>' +
+            '<div><button id="change-chatgpt-apikey">修改GPT的密钥</button></div>';
         document.body.appendChild(customContextMenu);
 
         // 创建气泡提示
@@ -39,6 +42,9 @@
         bubble.style.padding = '10px';
         bubble.style.borderRadius = '5px';
         bubble.style.color = '#fff';
+        bubble.style.maxWidth = '80%';
+        bubble.style.overflow = 'auto';
+        bubble.style.wordWrap = 'break-word';
         document.body.appendChild(bubble);
 
         // 创建加载动画
@@ -86,7 +92,8 @@
         }
     }
     build_html(document);
-    let ksnQueryCache = {}
+    let ksnQueryCache = {};
+    let enableGPT = false;
 
     // 当用户右击页面时，如果选中的是MD5或SHA1哈希值，则显示自定义的右键菜单
     document.oncontextmenu = function (e) {
@@ -104,26 +111,40 @@
         let wbSearchButton = document.getElementById('wb-search-button');
         let changeKsnKeyButton = document.getElementById('change-ksn-key-button');
         let loader = document.getElementById('huoji_tip_loader');
-        if (changeKsnKeyButton == null || wbSearchButton == null || vtSearchButton == null || copyButton == null || sendToTipButton == null || customContextMenu == null || loader == null) {
+        let enableChatgptButton = document.getElementById('enable-chatgpt');
+        let useChatgptButton = document.getElementById('use-chatgpt');
+        let changeGPTkeyButton = document.getElementById('change-chatgpt-apikey');
+        if (changeKsnKeyButton == null || wbSearchButton == null || vtSearchButton == null || copyButton == null
+            || sendToTipButton == null || customContextMenu == null || loader == null || enableChatgptButton == null || useChatgptButton == null || changeGPTkeyButton == null) {
             build_html(document);
             return;
         }
-        if (md5Pattern.test(text) || sha1Pattern.test(text) || ipPattern.test(text) || domainPattern.test(text)) {
+        if (md5Pattern.test(text) || sha1Pattern.test(text) || ipPattern.test(text) || domainPattern.test(text) || enableGPT == true) {
             customContextMenu.style.left = e.pageX + 'px';
             customContextMenu.style.top = e.pageY + 'px';
             customContextMenu.style.display = 'block';
 
             e.preventDefault();
+            useChatgptButton.style.display = enableGPT == false ? 'none' : 'block';
+
             if (md5Pattern.test(text) || sha1Pattern.test(text)) {
                 sendToTipButton.style.display = 'block';
                 vtSearchButton.style.display = 'block';
                 changeKsnKeyButton.style.display = 'block';
                 wbSearchButton.style.display = 'none';
-            } else {
+                changeGPTkeyButton.style.display = 'none';
+            } else if (ipPattern.test(text) || domainPattern.test(text)) {
                 sendToTipButton.style.display = 'none';
                 vtSearchButton.style.display = 'none';
                 changeKsnKeyButton.style.display = 'none';
                 wbSearchButton.style.display = 'block';
+                changeGPTkeyButton.style.display = 'none';
+            } else {
+                sendToTipButton.style.display = 'none';
+                vtSearchButton.style.display = 'none';
+                changeKsnKeyButton.style.display = 'none';
+                wbSearchButton.style.display = 'none';
+                changeGPTkeyButton.style.display = 'block';
             }
             sendToTipButton.onclick = function () {
                 if (md5Pattern.test(text) == false && sha1Pattern.test(text) == false) {
@@ -185,7 +206,7 @@
                 GM_setClipboard(text);
                 customContextMenu.style.display = 'none';  // 关闭菜单
             };
-            document.getElementById('vt-search-button').onclick = function () {
+            vtSearchButton.onclick = function () {
                 if (md5Pattern.test(text) == false && sha1Pattern.test(text) == false) {
                     alert('请输入正确的MD5或SHA1哈希值');
                     return;
@@ -193,11 +214,11 @@
                 window.open('https://www.virustotal.com/gui/file/' + text, '_blank');
                 customContextMenu.style.display = 'none';  // 关闭菜单
             };
-            document.getElementById('change-ksn-key-button').onclick = function () {
+            changeKsnKeyButton.onclick = function () {
                 apiKey = prompt("重新输入密钥:", "");
                 GM_setValue('apiKey', apiKey);
             };
-            document.getElementById('wb-search-button').onclick = function () {
+            wbSearchButton.onclick = function () {
                 if (md5Pattern.test(text) || sha1Pattern.test(text)) {
                     alert('请输入域名或者IP地址');
                     return;
@@ -208,12 +229,82 @@
                 }
                 customContextMenu.style.display = 'none';  // 关闭菜单
             };
+            enableChatgptButton.onclick = function () {
+                enableGPT = !enableGPT;
+                //change button text
+                if (enableGPT == false) {
+                    enableChatgptButton.innerHTML = '开启GPT介绍模式';
+                    changeKsnKeyButton.style.display = 'block';
+                } else {
+                    enableChatgptButton.innerHTML = '关闭GPT介绍模式';
+                    changeKsnKeyButton.style.display = 'none';
+                }
+            };
+            changeGPTkeyButton.onclick = function () {
+                let apiKey = prompt("重新输入密钥:", "");
+                GM_setValue('gpt_apiKey', apiKey);
+            }
+            useChatgptButton.onclick = function () {
+                if (enableGPT == false) {
+                    alert('GPT介绍模式没有开启,请刷新页面');
+                    return;
+                }
+                let apiKey = GM_getValue('gpt_apiKey');
+                if (!apiKey) {
+                    apiKey = prompt("第一次使用需要填OpenAi的密钥, 请输入您的OpenAi sk-API密钥:", "");
+                    GM_setValue('gpt_apiKey', apiKey);
+                }
+                loader.style.position = 'fixed';
+                loader.style.left = e.clientX + 'px';  // 使用鼠标点击时的坐标
+                loader.style.top = e.clientY + 'px';
+                loader.style.display = 'block';
+                loader.style.zIndex = '9999';
+                GM_xmlhttpRequest({
+                    method: "POST",
+                    url: "https://api.openai.com/v1/chat/completions",
+                    headers: {
+                        'Authorization': 'Bearer ' + apiKey,
+                        'Content-Type': 'application/json',
+                        "model": "gpt-3.5-turbo",
+                        "max_tokens": 32,
+                    },
+                    data: JSON.stringify({
+                        'model': 'gpt-3.5-turbo',
+                        'messages': [
+                            {
+                                "role": "system",
+                                "content": "From now on, you are an assistant of a senior Safety engineer. You have mastered many skills and techniques related to network security. You are proficient in assembly and reverse. Your responsibility is to help the questioner analyze the function of code, explain the purpose of code, guess code and analyze code"
+                            },
+                            {
+                                "role": "user",
+                                // 使用谢谢能bypass一些GPT的道德伦理限制
+                                "content": "请帮我解释一下这段信息,回复不要太长(小于64个字),猜测一下可能的情况,谢谢: " + text
+                            }
+                        ]
+                    }),
+                    onload: function (response) {
+                        loader.style.display = 'none';
+
+                        if (response.status === 200) {
+                            let result = JSON.parse(response.responseText);
+                            if ('choices' in result) {
+                                let answer = result.choices[0].message.content;
+                                showBubble(e.pageX, e.pageY, answer, '#888');
+                            }
+                        } else {
+                            showBubble(e.pageX, e.pageY, 'GPT服务器异常,请确认网络连通性以及密钥是否正确...', '#888');
+                        }
+                    }
+                });
+                customContextMenu.style.display = 'none';  // 关闭菜单
+            };
         }
     };
 
     // 点击其他地方关闭菜单和气泡提示
     document.onclick = function (e) {
-        if (e.target.id !== 'send-to-tip-button' && e.target.id !== 'copy-button' && e.target.id !== 'vt-search-button' && e.target.id !== 'wb-search-button') {
+        if (e.target.id !== 'send-to-tip-button' && e.target.id !== 'copy-button' && e.target.id !== 'vt-search-button'
+            && e.target.id !== 'wb-search-button' && e.target.id !== 'use-chatgpt') {
             let customContextMenu = document.getElementById('huoji_tip_custom-context-menu');
             if (customContextMenu) {
                 customContextMenu.style.display = 'none';
@@ -229,11 +320,21 @@
     function showBubble (x, y, message, color) {
         let bubble = document.getElementById('huoji_tip_bubble');
         if (bubble) {
+            bubble.textContent = message;
+            bubble.style.backgroundColor = color;
+            bubble.style.display = 'block';
+
+            // 调整气泡位置以确保不超出屏幕
+            let bubbleRect = bubble.getBoundingClientRect();
+            if (x + bubbleRect.width > window.innerWidth) {
+                x = window.innerWidth - bubbleRect.width;
+            }
+            if (y + bubbleRect.height > window.innerHeight) {
+                y = window.innerHeight - bubbleRect.height;
+            }
+
             bubble.style.left = x + 'px';
             bubble.style.top = y + 'px';
-            bubble.style.backgroundColor = color;
-            bubble.textContent = message;
-            bubble.style.display = 'block';
         }
     }
 })();
