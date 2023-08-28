@@ -1,9 +1,9 @@
 // ==UserScript==
 // @license      MIT
-// @name         安服小助手
+// @name         安全人员小助手
 // @namespace    http://key08.com/
-// @version      0.4
-// @description  安服必备
+// @version      0.5
+// @description  安全人员小助手,安全人员必备的工具
 // @author       huoji
 // @match        *://*/*
 // @grant        GM_setClipboard
