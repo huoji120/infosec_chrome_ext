@@ -466,11 +466,16 @@
             bubble.style.top = y + "px";
         }
     }
+
+    let pressTimer = null;
+    let moved = false;
+    let startX, startY;
     // 监听mousedown事件
     document.addEventListener('mousedown', function (e) {
-        let pressTimer = null;
-        let moved = false;
-
+        pressTimer = null;
+        moved = false;
+        startX = e.clientX;  // 记录鼠标按下时的位置
+        startY = e.clientY;
         // 开始计时
         pressTimer = window.setTimeout(function () {
             if (!moved) {  // 只有当鼠标没有移动时才显示菜单
@@ -478,16 +483,28 @@
                 showMenu("huoji", e);
             }
         }, 1000);  // 这里设置长按的时间，单位是毫秒
+    });
 
-        // 监听mousemove事件
-        document.addEventListener('mousemove', function () {
+    // 监听mousemove事件
+    document.addEventListener('mousemove', function (e) {
+        if (pressTimer == null) {
+            return;
+        }
+        let moveX = e.clientX;
+        let moveY = e.clientY;
+
+        // 如果鼠标移动距离大于5px, 则认为是移动
+        if (Math.abs(moveX - startX) > 5 || Math.abs(moveY - startY) > 5) {
             moved = true;  // 如果鼠标移动，就将moved设为true
             clearTimeout(pressTimer);  // 并取消计时器
-        }, { once: true });
-
-        // 监听mouseup事件
-        document.addEventListener('mouseup', function () {
-            clearTimeout(pressTimer);
-        }, { once: true });
+        }
     });
+
+    // 监听mouseup事件
+    document.addEventListener('mouseup', function () {
+        if (pressTimer != null) {
+            clearTimeout(pressTimer);
+        }
+    });
+
 })();
