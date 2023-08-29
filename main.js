@@ -2,7 +2,7 @@
 // @license      MIT
 // @name         安全人员小助手
 // @namespace    http://key08.com/
-// @version      0.6
+// @version      0.7
 // @description  安全人员小助手,安全人员必备的工具
 // @author       huoji
 // @match        *://*/*
