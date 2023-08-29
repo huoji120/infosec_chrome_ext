@@ -337,7 +337,7 @@
                                 let result = JSON.parse(response.responseText);
                                 ksnQueryCache[text] = {
                                     zone: result.Zone,
-                                    hitcount: result.FileGeneralInfo.HitsCount,
+                                    hitcount: 'HitsCount' in result.FileGeneralInfo ? result.FileGeneralInfo.HitsCount : 0,
                                 };
                                 PrintKsnResult(ksnQueryCache[text], e);
                             } else if (response.status === 401) {
